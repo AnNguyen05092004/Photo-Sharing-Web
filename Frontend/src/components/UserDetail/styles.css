@@ -1,0 +1,45 @@
+.user-detail-container {
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #fefefe;
+}
+
+.user-detail-container h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.user-detail-container p {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.view-photos-button {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 10px 16px;
+  background-color: #0077cc;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.view-photos-button:hover {
+  background-color: #005fa3;
+}
+
+.error-text {
+  color: red;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.loader {
+  text-align: center;
+  margin-top: 30px;
+  font-style: italic;
+}

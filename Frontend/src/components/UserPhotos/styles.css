@@ -1,0 +1,32 @@
+.user-photos {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.photo-card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #fafafa;
+}
+
+.photo-img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+
+.photo-info {
+  font-size: 14px;
+}
+
+.photo-comment {
+  background-color: #f2f2f2;
+  padding: 8px;
+  margin-top: 8px;
+  border-radius: 4px;
+}

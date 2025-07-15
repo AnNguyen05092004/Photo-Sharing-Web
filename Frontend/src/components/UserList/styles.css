@@ -1,0 +1,31 @@
+.user-list-container {
+  padding: 20px;
+  max-width: 400px;
+  margin: auto;
+  font-family: Arial, sans-serif;
+}
+
+.user-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.user-list-item {
+  padding: 10px 0;
+}
+
+.user-link {
+  text-decoration: none;
+  color: #0077cc;
+  font-weight: bold;
+}
+
+.user-link:hover {
+  color: #005999;
+  text-decoration: underline;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #ddd;
+}

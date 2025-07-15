@@ -1,0 +1,30 @@
+.topbar {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  background-color: #1976d2;
+  color: white;
+  padding: 10px 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.topbar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.topbar-left,
+.topbar-right {
+  flex: 1;
+}
+
+.topbar-left {
+  text-align: left;
+}
+
+.topbar-right {
+  text-align: right;
+}
