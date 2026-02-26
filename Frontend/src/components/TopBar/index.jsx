@@ -1,14 +1,26 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useLocation, matchPath, useNavigate } from "react-router-dom";
-import "./styles.css";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  IconButton,
+  Box,
+  Snackbar,
+  Alert,
+} from "@mui/material";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+import LogoutIcon from "@mui/icons-material/Logout";
+import EditIcon from "@mui/icons-material/Edit";
 
 function TopBar({ loggedInUser, setLoggedInUser, setIsLoggedIn, onPhotoUploaded }) {
   const location = useLocation();
   const navigate = useNavigate();
   const fileInputRef = useRef();
   const [pageUser, setPageUser] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
-  // Lấy userId trên URL nếu có
   useEffect(() => {
     const fetchPageUser = async () => {
       const match =
@@ -32,8 +44,7 @@ function TopBar({ loggedInUser, setLoggedInUser, setIsLoggedIn, onPhotoUploaded 
     fetchPageUser();
   }, [location]);
 
-  // Xác định label trung tâm
-  let centerContent = "Welcome to PhotoShare";
+  let centerContent = "PhotoShare";
   if (location.pathname.startsWith("/photos") && pageUser) {
     centerContent = `Photos of ${pageUser.first_name} ${pageUser.last_name}`;
   } else if (location.pathname.startsWith("/users") && pageUser) {
@@ -63,59 +74,75 @@ function TopBar({ loggedInUser, setLoggedInUser, setIsLoggedIn, onPhotoUploaded 
     });
     if (res.ok) {
       if (onPhotoUploaded) onPhotoUploaded();
-      alert("Photo uploaded!");
+      setSnackbar({ open: true, message: "Photo uploaded successfully!", severity: "success" });
     } else {
-      alert("Upload failed!");
+      setSnackbar({ open: true, message: "Upload failed!", severity: "error" });
     }
     e.target.value = "";
   };
 
   return (
-    <header className="topbar">
-      <div className="topbar-content" style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 24,
-        fontWeight: 500
-      }}>
-        {/* Left: tên user đăng nhập */}
-        <div style={{ flex: 1, textAlign: "left" }}>
-          {loggedInUser ? `Hi, ${loggedInUser.first_name}` : "Please Login"}
-        </div>
+    <>
+      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+        <Toolbar sx={{ justifyContent: "space-between" }}>
+          {/* Left */}
+          <Typography variant="h6" sx={{ fontWeight: 700, minWidth: 180 }}>
+            {loggedInUser ? `Hi, ${loggedInUser.first_name}` : "Please Login"}
+          </Typography>
 
-        {/* Center: label */}
-        <div style={{ flex: 2, textAlign: "center" }}>
-          {centerContent}
-        </div>
+          {/* Center */}
+          <Typography variant="h6" sx={{ fontWeight: 500, textAlign: "center", flex: 1 }}>
+            {centerContent}
+          </Typography>
 
-        {/* Right: các nút chức năng và label Nguyễn Văn An */}
-        <div style={{ flex: 1, textAlign: "right", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12 }}>
-          {loggedInUser && (
-            <>
-              <button
-                onClick={() => navigate(`/users/${loggedInUser._id}/edit`)}
-                style={{ padding: "4px 12px" }}
-              >
-                Edit Profile
-              </button>
-              <label style={{ cursor: "pointer", margin: 0 }}>
-                <span style={{ marginRight: 4 }}>Upload</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={handleFileChange}
-                  ref={fileInputRef}
-                />
-              </label>
-              <button onClick={handleLogout} style={{ padding: "4px 12px" }}>Logout</button>
-            </>
-          )}
-          <span style={{ marginLeft: 12, fontWeight: 600 }}>Nguyễn Văn An</span>
-        </div>
-      </div>
-    </header>
+          {/* Right */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {loggedInUser && (
+              <>
+                <IconButton
+                  color="inherit"
+                  onClick={() => navigate(`/users/${loggedInUser._id}/edit`)}
+                  title="Edit Profile"
+                >
+                  <EditIcon />
+                </IconButton>
+
+                <IconButton color="inherit" component="label" title="Upload Photo">
+                  <PhotoCameraIcon />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={handleFileChange}
+                    ref={fileInputRef}
+                  />
+                </IconButton>
+
+                <Button
+                  color="inherit"
+                  startIcon={<LogoutIcon />}
+                  onClick={handleLogout}
+                  sx={{ textTransform: "none" }}
+                >
+                  Logout
+                </Button>
+              </>
+            )}
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert severity={snackbar.severity} variant="filled" onClose={() => setSnackbar((s) => ({ ...s, open: false }))}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </>
   );
 }
 

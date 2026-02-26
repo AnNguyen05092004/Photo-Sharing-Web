@@ -3,12 +3,18 @@ const mongoose = require("mongoose");
 const Photo = require("../db/photoModel");
 const User = require("../db/userModel");
 const requireLogin = require("../middleware/auth");
+const fs = require("fs");
+const path = require("path");
 
 const router = express.Router();
 
+// GET photos of a user with pagination
 router.get("/:id", async (req, res) => {
   try {
     const userId = req.params.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).send("Invalid user ID");
@@ -19,15 +25,22 @@ router.get("/:id", async (req, res) => {
       return res.status(404).send("User not found");
     }
 
-    const photos = await Photo.find({ user_id: userId }).populate(
-      "comments.user_id"
-    );
+    const totalPhotos = await Photo.countDocuments({ user_id: userId });
+    const totalPages = Math.ceil(totalPhotos / limit);
+
+    const photos = await Photo.find({ user_id: userId })
+      .sort({ date_time: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("comments.user_id");
 
     const formattedPhotos = photos.map((photo) => ({
       _id: photo._id,
       file_name: photo.file_name,
       date_time: photo.date_time,
       user_id: photo.user_id,
+      likes: photo.likes || [],
+      likeCount: photo.likes ? photo.likes.length : 0,
       comments: photo.comments.map((comment) => ({
         _id: comment._id,
         comment: comment.comment,
@@ -42,13 +55,19 @@ router.get("/:id", async (req, res) => {
       })),
     }));
 
-    res.json(formattedPhotos);
+    res.json({
+      photos: formattedPhotos,
+      currentPage: page,
+      totalPages,
+      totalPhotos,
+    });
   } catch (err) {
     console.error("ERROR in /api/photo/:id", err);
     res.status(500).send(`Server Error: ${err.message}`);
   }
 });
 
+// POST comment on a photo
 router.post("/commentsOfPhoto/:photo_id", requireLogin, async (req, res) => {
   const { comment } = req.body;
   if (!comment || !comment.trim()) {
@@ -66,6 +85,80 @@ router.post("/commentsOfPhoto/:photo_id", requireLogin, async (req, res) => {
     photo.comments.push(newComment);
     await photo.save();
     res.status(200).json(newComment);
+  } catch (err) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// POST like/unlike a photo (toggle)
+router.post("/:photo_id/like", requireLogin, async (req, res) => {
+  try {
+    const photo = await Photo.findById(req.params.photo_id);
+    if (!photo) return res.status(404).json({ message: "Photo not found" });
+
+    const userId = req.session.user._id;
+    const alreadyLiked = photo.likes.some(
+      (id) => id.toString() === userId.toString()
+    );
+
+    if (alreadyLiked) {
+      photo.likes = photo.likes.filter(
+        (id) => id.toString() !== userId.toString()
+      );
+    } else {
+      photo.likes.push(userId);
+    }
+
+    await photo.save();
+    res.status(200).json({
+      likes: photo.likes,
+      likeCount: photo.likes.length,
+      liked: !alreadyLiked,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// DELETE a photo (only owner can delete)
+router.delete("/:photo_id", requireLogin, async (req, res) => {
+  try {
+    const photo = await Photo.findById(req.params.photo_id);
+    if (!photo) return res.status(404).json({ message: "Photo not found" });
+
+    if (photo.user_id.toString() !== req.session.user._id.toString()) {
+      return res.status(403).json({ message: "Permission denied" });
+    }
+
+    // Delete image file from disk
+    const imagePath = path.join(__dirname, "../images/", photo.file_name);
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+    }
+
+    await Photo.findByIdAndDelete(req.params.photo_id);
+    res.status(200).json({ message: "Photo deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// DELETE a comment (only comment owner can delete)
+router.delete("/:photo_id/comments/:comment_id", requireLogin, async (req, res) => {
+  try {
+    const photo = await Photo.findById(req.params.photo_id);
+    if (!photo) return res.status(404).json({ message: "Photo not found" });
+
+    const comment = photo.comments.id(req.params.comment_id);
+    if (!comment) return res.status(404).json({ message: "Comment not found" });
+
+    if (comment.user_id.toString() !== req.session.user._id.toString()) {
+      return res.status(403).json({ message: "Permission denied" });
+    }
+
+    photo.comments.pull({ _id: req.params.comment_id });
+    await photo.save();
+    res.status(200).json({ message: "Comment deleted" });
   } catch (err) {
     res.status(500).json({ message: "Internal server error" });
   }

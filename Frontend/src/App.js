@@ -7,6 +7,7 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
+import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 
 import TopBar from "./components/TopBar";
 import UserDetail from "./components/UserDetail";
@@ -14,6 +15,18 @@ import UserList from "./components/UserList";
 import UserPhotos from "./components/UserPhotos";
 import LoginRegister from "./components/LoginRegister";
 import EditProfile from "./components/EditProfile";
+
+const theme = createTheme({
+  palette: {
+    primary: { main: "#1976d2" },
+    secondary: { main: "#e91e63" },
+    background: { default: "#f5f5f5" },
+  },
+  typography: {
+    fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
+  },
+  shape: { borderRadius: 12 },
+});
 
 function ProtectedRoute({ element, isLoggedIn }) {
   const location = useLocation();
@@ -52,25 +65,23 @@ const App = () => {
     checkSession();
   }, [location]);
 
-
-  if (isLoggedIn === null) return null; // loading
+  if (isLoggedIn === null) return null;
 
   return (
-    <div>
+    <>
       <TopBar
         loggedInUser={loggedInUser}
         setLoggedInUser={setLoggedInUser}
         setIsLoggedIn={setIsLoggedIn}
         onPhotoUploaded={() => setReloadPhotos((v) => !v)}
       />
-      <div style={{ height: 32 }} /> {/* buffer for topbar */}
-      <div style={{ display: "flex", alignItems: "flex-start" }}>
+      <div style={{ display: "flex", marginTop: 72, minHeight: "calc(100vh - 72px)" }}>
         {isLoggedIn && (
-          <div style={{ width: 250, marginRight: 24 }}>
+          <div style={{ width: 280, flexShrink: 0 }}>
             <UserList />
           </div>
         )}
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, padding: "24px 32px", maxWidth: 960 }}>
           <Routes>
             <Route path="/login" element={<LoginRegister setIsLoggedIn={setIsLoggedIn} />} />
             <Route
@@ -82,7 +93,6 @@ const App = () => {
                 />
               }
             />
-
             <Route
               path="/users/:userId/edit"
               element={
@@ -96,32 +106,26 @@ const App = () => {
               path="/photos/:userId"
               element={
                 <ProtectedRoute
-                  element={<UserPhotos reload={reloadPhotos} />}
+                  element={<UserPhotos reload={reloadPhotos} loggedInUser={loggedInUser} />}
                   isLoggedIn={isLoggedIn}
                 />
               }
             />
-            {/* <Route
-              path="/users"
-              element={
-                <ProtectedRoute
-                  element={<UserList />}
-                  isLoggedIn={isLoggedIn}
-                />
-              }
-            /> */}
             <Route path="*" element={<Navigate to="/login" />} />
           </Routes>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
 export default function AppWrapper() {
   return (
-    <Router>
-      <App />
-    </Router>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <App />
+      </Router>
+    </ThemeProvider>
   );
 }
