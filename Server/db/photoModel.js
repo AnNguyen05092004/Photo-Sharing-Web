@@ -1,5 +1,18 @@
 const mongoose = require("mongoose");
 const User = require("../db/userModel");
+
+/**
+ * Define the Mongoose Schema for a Reply (nested comment).
+ */
+const replySchema = new mongoose.Schema({
+  // Nội dung reply
+  comment: String,
+  // Thời gian tạo reply
+  date_time: { type: Date, default: Date.now },
+  // User tạo reply
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: "Users" },
+});
+
 /**
  * Define the Mongoose Schema for a Comment.
  */
@@ -9,7 +22,9 @@ const commentSchema = new mongoose.Schema({
   // The date and time when the comment was created.
   date_time: { type: Date, default: Date.now },
   // The ID of the user who created the comment.
-  user_id: { type: mongoose.Schema.Types.ObjectId, ref: User },
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: "Users" },
+  // Replies cho comment này (nested comments)
+  replies: [replySchema],
 });
 
 /**
@@ -18,6 +33,8 @@ const commentSchema = new mongoose.Schema({
 const photoSchema = new mongoose.Schema({
   // Name of the file containing the photo (in the project6/images directory).
   file_name: { type: String },
+  // Caption/description cho ảnh
+  caption: { type: String, default: "" },
   // The date and time when the photo was added to the database.
   date_time: { type: Date, default: Date.now },
   // The ID of the user who created the photo.
@@ -25,7 +42,7 @@ const photoSchema = new mongoose.Schema({
   // Array of comment objects representing the comments made on this photo.
   comments: [commentSchema],
   // Array of user IDs who liked this photo.
-  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: User }],
+  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Users" }],
 });
 
 /**

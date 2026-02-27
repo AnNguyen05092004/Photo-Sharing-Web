@@ -1,5 +1,6 @@
 const express = require("express")
 const router = express.Router();
+const bcrypt = require("bcrypt");
 
 const User = require("../db/userModel")
 
@@ -14,7 +15,10 @@ router.post("/login", async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        if (user.password !== password) {
+        
+        // So sánh password với bcrypt
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
             return res.status(400).json({ message: "Incorrect password" });
         }
 

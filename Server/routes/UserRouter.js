@@ -1,7 +1,11 @@
 const express = require("express");
 const User = require("../db/userModel");
+const Photo = require("../db/photoModel");
+const bcrypt = require("bcrypt");
 const router = express.Router();
-const requireLogin = require("../middleware/auth")
+const requireLogin = require("../middleware/auth");
+
+const SALT_ROUNDS = 10;
 
 // router.post("/", async (request, response) => {
 
@@ -62,9 +66,13 @@ router.post("/", async (req, res) => {
   if (existing) {
     return res.status(400).send("login_name already exists.");
   }
+  
+  // Hash password với bcrypt
+  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+  
   const user = new User({
     login_name,
-    password, // (Có thể hash nếu muốn bảo mật hơn)
+    password: hashedPassword,
     first_name,
     last_name,
     location,
@@ -73,6 +81,34 @@ router.post("/", async (req, res) => {
   });
   await user.save();
   res.status(200).json({ login_name: user.login_name, first_name, last_name });
+});
+
+// API lấy thống kê user (số ảnh, likes, comments)
+router.get("/:id/stats", async (req, res) => {
+  try {
+    const userId = req.params.id;
+    
+    // Đếm số ảnh
+    const photoCount = await Photo.countDocuments({ user_id: userId });
+    
+    // Lấy tổng likes và comments từ tất cả ảnh của user
+    const photos = await Photo.find({ user_id: userId });
+    let totalLikes = 0;
+    let totalComments = 0;
+    
+    photos.forEach(photo => {
+      totalLikes += photo.likes?.length || 0;
+      totalComments += photo.comments?.length || 0;
+    });
+    
+    res.json({
+      photoCount,
+      totalLikes,
+      totalComments,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 module.exports = router;

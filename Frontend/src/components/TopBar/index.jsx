@@ -9,10 +9,17 @@ import {
   Box,
   Snackbar,
   Alert,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import LogoutIcon from "@mui/icons-material/Logout";
 import EditIcon from "@mui/icons-material/Edit";
+import NotificationBell from "../NotificationBell";
+import SearchBar from "../SearchBar";
 
 function TopBar({ loggedInUser, setLoggedInUser, setIsLoggedIn, onPhotoUploaded }) {
   const location = useLocation();
@@ -20,6 +27,7 @@ function TopBar({ loggedInUser, setLoggedInUser, setIsLoggedIn, onPhotoUploaded 
   const fileInputRef = useRef();
   const [pageUser, setPageUser] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [uploadDialog, setUploadDialog] = useState({ open: false, file: null, caption: "" });
 
   useEffect(() => {
     const fetchPageUser = async () => {
@@ -64,8 +72,18 @@ function TopBar({ loggedInUser, setLoggedInUser, setIsLoggedIn, onPhotoUploaded 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    // Mở dialog để nhập caption
+    setUploadDialog({ open: true, file, caption: "" });
+    e.target.value = "";
+  };
+
+  const handleUploadConfirm = async () => {
+    const { file, caption } = uploadDialog;
+    if (!file) return;
+    
     const formData = new FormData();
     formData.append("photo", file);
+    formData.append("caption", caption);
 
     const res = await fetch("http://localhost:8081/api/photos/new", {
       method: "POST",
@@ -78,7 +96,7 @@ function TopBar({ loggedInUser, setLoggedInUser, setIsLoggedIn, onPhotoUploaded 
     } else {
       setSnackbar({ open: true, message: "Upload failed!", severity: "error" });
     }
-    e.target.value = "";
+    setUploadDialog({ open: false, file: null, caption: "" });
   };
 
   return (
@@ -91,14 +109,19 @@ function TopBar({ loggedInUser, setLoggedInUser, setIsLoggedIn, onPhotoUploaded 
           </Typography>
 
           {/* Center */}
-          <Typography variant="h6" sx={{ fontWeight: 500, textAlign: "center", flex: 1 }}>
-            {centerContent}
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1, justifyContent: "center" }}>
+            {loggedInUser && <SearchBar />}
+            <Typography variant="h6" sx={{ fontWeight: 500 }}>
+              {centerContent}
+            </Typography>
+          </Box>
 
           {/* Right */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {loggedInUser && (
               <>
+                <NotificationBell />
+                
                 <IconButton
                   color="inherit"
                   onClick={() => navigate(`/users/${loggedInUser._id}/edit`)}
@@ -142,6 +165,35 @@ function TopBar({ loggedInUser, setLoggedInUser, setIsLoggedIn, onPhotoUploaded 
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Upload Dialog với Caption */}
+      <Dialog open={uploadDialog.open} onClose={() => setUploadDialog({ open: false, file: null, caption: "" })}>
+        <DialogTitle>Upload Photo</DialogTitle>
+        <DialogContent>
+          {uploadDialog.file && (
+            <Box sx={{ mb: 2, textAlign: "center" }}>
+              <img
+                src={URL.createObjectURL(uploadDialog.file)}
+                alt="Preview"
+                style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 8 }}
+              />
+            </Box>
+          )}
+          <TextField
+            fullWidth
+            label="Caption (optional)"
+            placeholder="Add a caption for your photo..."
+            value={uploadDialog.caption}
+            onChange={(e) => setUploadDialog((prev) => ({ ...prev, caption: e.target.value }))}
+            multiline
+            rows={2}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setUploadDialog({ open: false, file: null, caption: "" })}>Cancel</Button>
+          <Button variant="contained" onClick={handleUploadConfirm}>Upload</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

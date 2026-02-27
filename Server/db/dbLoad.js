@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 require("dotenv").config();
+const bcrypt = require("bcrypt");
 
 const models = require("../modelData/models.js");
 
@@ -8,6 +9,7 @@ const Photo = require("../db/photoModel.js");
 const SchemaInfo = require("../db/schemaInfo.js");
 
 const versionString = "1.0";
+const SALT_ROUNDS = 10;
 
 async function dbLoad() {
   try {
@@ -24,10 +26,13 @@ async function dbLoad() {
   const userModels = models.userListModel();
   const mapFakeId2RealId = {};
   for (const user of userModels) {
+    // Hash password trước khi lưu
+    const hashedPassword = await bcrypt.hash(user.password, SALT_ROUNDS);
+    
     userObj = new User({
       login_name: user.login_name,
-      password: user.password, // <--
-      first_name: user.first_name, // <--
+      password: hashedPassword,
+      first_name: user.first_name,
       last_name: user.last_name,
       location: user.location,
       description: user.description,

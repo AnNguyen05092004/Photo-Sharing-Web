@@ -48,7 +48,9 @@ const dbConnect = require("./db/dbConnect");
 const UserRouter = require("./routes/UserRouter");
 const PhotoRouter = require("./routes/PhotoRouter");
 const AdminRouter = require("./routes/AdminRouter");
-const NewPhotoRouter = require("./routes/NewPhotoRouter"); // Thêm router mới
+const NewPhotoRouter = require("./routes/NewPhotoRouter");
+const NotificationRouter = require("./routes/NotificationRouter");
+const SearchRouter = require("./routes/SearchRouter");
 
 const session = require("express-session");
 
@@ -78,7 +80,9 @@ app.use(
 app.use("/api/user", UserRouter);
 app.use("/api/photo", PhotoRouter);
 app.use("/api/admin", AdminRouter);
-app.use("/api", NewPhotoRouter); // Sử dụng router mới
+app.use("/api", NewPhotoRouter);
+app.use("/api/notifications", NotificationRouter);
+app.use("/api/search", SearchRouter);
 
 const path = require("path");
 app.use("/images", express.static(path.join(__dirname, "./images")));

@@ -25,6 +25,7 @@ router.post("/photos/new", requireLogin, upload.single("photo"), async (req, res
   try {
     const newPhoto = new Photo({
       file_name: req.file.filename,
+      caption: req.body.caption || "",
       date_time: new Date(),
       user_id: req.session.user._id,
       comments: [],
